@@ -69,11 +69,14 @@ _MEDIDAS: dict[str, dict] = {}
 @pytest.mark.tc("TC-116")
 @pytest.mark.parametrize("ruta", LATENCIA)
 def test_tc116_latencia_p95_de_los_listados(ruta):
-    """Percentil 95 de los listados principales (20 repeticiones, criterio p95 < 200 ms de RNF-01)."""
+    """Percentil 95 de los listados principales (40 repeticiones, criterio p95 < 200 ms de RNF-01).
+
+    Con 20 muestras, dos pausas aisladas del equipo ya movían el p95; con 40 la medida es más estable y el
+    criterio sigue siendo el mismo."""
     admin = cliente("administrador")
     admin.get(ruta)   # calentamiento: la primera petición carga cachés y no representa el uso normal
     tiempos = []
-    for _ in range(20):
+    for _ in range(40):
         r = admin.get(ruta)
         assert r.status_code == 200, f"{ruta}: HTTP {r.status_code}"
         tiempos.append(admin.ultima_duracion_ms)
