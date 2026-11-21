@@ -145,17 +145,23 @@ def word(r: Reporte, max_ev_aprobados: int = 1) -> Path:
                                          ["Equipo", a["so"]], ["Python", a["python"]],
                                          ["Suite", r.datos.get("suite") or "completa"]], [5, 11])
 
-    doc.add_heading("3. Resultados por módulo", level=1)
+    doc.add_heading("3. Resultados por tipo de prueba", level=1)
+    _tabla(doc, ["Tipo", "Pruebas", "PASS", "FAIL", "BLOCKED", "NOT RUN", "Salud"],
+           [[t["tipo"], t["total"], t["PASS"], t["FAIL"], t["BLOCKED"], t["NOT RUN"], f"{t['tasa']} %"]
+            for t in r.por_tipo], [5.2, 1.6, 1.4, 1.4, 1.8, 1.8, 1.6])
+    doc.add_paragraph("Una prueba puede ser de más de un tipo (por ejemplo, humo y API): las filas no se suman.").runs[0].italic = True
+
+    doc.add_heading("4. Resultados por módulo", level=1)
     _tabla(doc, ["Módulo", "Pruebas", "PASS", "FAIL", "BLOCKED", "NOT RUN", "Éxito"],
            [[m["modulo"], m["total"], m["PASS"], m["FAIL"], m["BLOCKED"], m["NOT RUN"], f"{m['tasa']} %"]
             for m in r.por_modulo], [5.2, 1.6, 1.4, 1.4, 1.8, 1.8, 1.6])
 
-    doc.add_heading("4. Casos de prueba", level=1)
+    doc.add_heading("5. Casos de prueba", level=1)
     _tabla(doc, ["Caso", "Título", "Módulo", "Pruebas", "Tiempo", "Estado"],
            [[t["tc"], t["titulo"], t["modulo"], len(t["pruebas"]), f"{t['duracion_s']} s", t["estado"]]
             for t in sorted(r.por_tc.values(), key=lambda x: x["tc"])], [1.6, 7.0, 3.2, 1.4, 1.6, 1.8])
 
-    doc.add_heading(f"5. Fallos ({len(r.fallos)})", level=1)
+    doc.add_heading(f"6. Fallos ({len(r.fallos)})", level=1)
     if not r.fallos:
         doc.add_paragraph("No hubo fallos en esta corrida.")
     for c in r.fallos:
@@ -174,18 +180,21 @@ def word(r: Reporte, max_ev_aprobados: int = 1) -> Path:
                 cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 cap.runs[0].font.size = Pt(8)
 
+    seccion = 7   # la sección de rendimiento solo existe si la corrida tuvo carga: la numeración no salta
     if r.rendimiento:
-        doc.add_heading("6. Rendimiento (Locust)", level=1)
+        doc.add_heading(f"{seccion}. Rendimiento (Locust)", level=1)
+        seccion += 1
         _tabla(doc, ["Escenario", "Peticiones", "Errores", "p50", "p95", "p99", "Pet./s"],
                [[x["escenario"], x["peticiones"], f"{x['error_pct']} %", f"{x['p50_ms']:.0f} ms",
                  f"{x['p95_ms']:.0f} ms", f"{x['p99_ms']:.0f} ms", x["rps"]] for x in r.rendimiento])
 
-    doc.add_heading("7. Defectos registrados", level=1)
+    doc.add_heading(f"{seccion}. Defectos registrados", level=1)
+    seccion += 1
     _tabla(doc, ["Defecto", "Título", "Severidad", "Estado", "Commit"],
            [[d["id"], d["titulo"], d["severidad"], d["estado"], d.get("commit") or "—"] for d in r.defectos],
            [1.8, 9.0, 1.8, 2.2, 2.0])
 
-    doc.add_heading("8. Evidencias de casos aprobados", level=1)
+    doc.add_heading(f"{seccion}. Evidencias de casos aprobados", level=1)
     doc.add_paragraph(f"Una captura por caso aprobado (hasta {max_ev_aprobados}); el resto está en la carpeta "
                       "evidencias/ de la corrida con su código EV.")
     for t in sorted(r.por_tc.values(), key=lambda x: x["tc"]):
