@@ -59,12 +59,12 @@ def guardar_en_env(nombre: str, valor: str) -> None:
     ruta = RAIZ / ".env"
     lineas = ruta.read_text(encoding="utf-8").splitlines() if ruta.exists() else []
     nuevas, puesto = [], False
-    for l in lineas:
-        if l.startswith(f"{nombre}="):
+    for linea in lineas:
+        if linea.startswith(f"{nombre}="):
             nuevas.append(f"{nombre}={valor}")
             puesto = True
         else:
-            nuevas.append(l)
+            nuevas.append(linea)
     if not puesto:
         nuevas.append(f"{nombre}={valor}")
     ruta.write_text("\n".join(nuevas) + "\n", encoding="utf-8")

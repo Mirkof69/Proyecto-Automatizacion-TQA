@@ -15,7 +15,6 @@ import json
 import os
 import re
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parents[1]
@@ -167,12 +166,12 @@ def leer_endpoints() -> list[dict]:
 
 def leer_requisitos(docs: Path) -> dict:
     rf, rnf = [], []
-    for l in (docs / "02_requisitos_funcionales.md").read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^\| (RF-\d+) \| (.*?) \| (Alta|Media|Baja) \| (.*?) \|$", l)
+    for linea in (docs / "02_requisitos_funcionales.md").read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\| (RF-\d+) \| (.*?) \| (Alta|Media|Baja) \| (.*?) \|$", linea)
         if m:
             rf.append({"id": m.group(1), "descripcion": m.group(2), "prioridad": m.group(3), "verificado_por": m.group(4)})
-    for l in (docs / "03_requisitos_no_funcionales.md").read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^\| (RNF-\d+) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \|$", l)
+    for linea in (docs / "03_requisitos_no_funcionales.md").read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\| (RNF-\d+) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \|$", linea)
         if m:
             rnf.append({"id": m.group(1), "categoria": m.group(2), "descripcion": m.group(3), "criterio": m.group(4),
                         "medicion": m.group(5), "verificado_por": m.group(6)})
@@ -185,7 +184,7 @@ def principal():
     a = ap.parse_args()
     raiz = Path(a.sistema)
     back = raiz / "Backend"
-    src = back / "frontend" / "src"
+    src = raiz / "frontend" / "src"
     sys.path.insert(0, str(back))
     os.chdir(back)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
@@ -217,7 +216,7 @@ def principal():
     # ---------------------------------------------------------------- pantallas
     navegables = [r for r in rutas if not r["redirige_a"]]
     L = ["# Inventario de pantallas", "",
-         f"Fuente: `Backend/frontend/src/routes/AppRoutes.tsx` (leído por `tools/inventario.py`). "
+         f"Fuente: `frontend/src/routes/AppRoutes.tsx` (leído por `tools/inventario.py`). "
          f"{len(navegables)} rutas navegables y {len(rutas) - len(navegables)} redirecciones. "
          "El permiso es el que exige `ProtectedRoute`; los roles salen de `usuarios/permisos_por_rol.py`.", "",
          "| # | Ruta | Componente | Permiso | Roles con acceso | Acciones detectadas |", "|---|---|---|---|---|---|"]

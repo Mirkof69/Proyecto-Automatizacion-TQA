@@ -100,7 +100,7 @@
           "id": "67e78341-1b13-5ac1-a28e-251a7606de69",
           "comment": "Nombre de una paciente activa",
           "command": "executeScript",
-          "target": "const filas=[...document.querySelectorAll('.ant-table-tbody tr.ant-table-row')].filter(f=>!f.innerText.includes('QA '));const txt=filas.length?filas[0].innerText:'';const p=txt.split(/\\s+/).filter(w=>/^[A-Za-zÁÉÍÓÚÑáéíóúñü]{4,}$/.test(w)&&w!=='años');return p.length?p[0]:'';",
+          "target": "const todas=[...document.querySelectorAll('.ant-table-tbody tr.ant-table-row')];const reales=todas.filter(f=>!f.innerText.includes('QA '));const filas=reales.length?reales:todas;const txt=filas.length?filas[0].innerText:'';const p=txt.split(/\\s+/).filter(w=>/^[A-Za-zÁÉÍÓÚÑáéíóúñü]{4,}$/.test(w)&&w!=='años');return p.length?p[0]:'';",
           "targets": [],
           "value": "termino"
         },

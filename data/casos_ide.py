@@ -43,41 +43,41 @@ def ingresar(rol: str) -> list[dict]:
     return L + [c("waitForElementVisible", USUARIO, "30000", "Llegó al panel")]
 
 
-def _buscador(l: Listado) -> str:
-    return f"css=input[placeholder='{l.buscador}']"
+def _buscador(listado: Listado) -> str:
+    return f"css=input[placeholder='{listado.buscador}']"
 
 
-def buscar_y_filtrar(l: Listado) -> list[dict]:
+def buscar_y_filtrar(listado: Listado) -> list[dict]:
     """Buscador con un término tomado del propio listado, búsqueda sin resultados y filtro desplegable."""
-    fila_con = f"xpath=//tr[contains(@class,'ant-table-row')][contains(.,'${{termino}}')]"
-    L = ingresar(l.rol) + [
-        c("open", l.ruta, comentario=f"Listado de {l.modulo}"),
-        c("waitForElementVisible", _buscador(l), "25000"),
+    fila_con = "xpath=//tr[contains(@class,'ant-table-row')][contains(.,'${termino}')]"
+    L = ingresar(listado.rol) + [
+        c("open", listado.ruta, comentario=f"Listado de {listado.modulo}"),
+        c("waitForElementVisible", _buscador(listado), "25000"),
         c("waitForElementVisible", "css=.ant-table-tbody tr.ant-table-row", "30000", "El listado tiene registros"),
-        c("assertElementPresent", f"xpath=(//thead//th[normalize-space(.)='{l.columna}'])[1]", comentario="Columna esperada"),
+        c("assertElementPresent", f"xpath=(//thead//th[normalize-space(.)='{listado.columna}'])[1]", comentario="Columna esperada"),
         c("executeScript", "return document.querySelectorAll('.ant-table-tbody tr.ant-table-row').length", "filas_antes"),
-        c("executeScript", JS_TERMINO % l.columna, "termino", "Palabra del primer registro para buscarla"),
+        c("executeScript", JS_TERMINO % listado.columna, "termino", "Palabra del primer registro para buscarla"),
         c("executeScript", "return ${termino}.length > 0", "hay_termino"),
         c("assert", "hay_termino", "true"),
         c("echo", "Buscando: ${termino} (filas antes: ${filas_antes})"),
-        c("type", _buscador(l), "${termino}"),
-        c("sendKeys", _buscador(l), "${KEY_ENTER}"),
+        c("type", _buscador(listado), "${termino}"),
+        c("sendKeys", _buscador(listado), "${KEY_ENTER}"),
         c("waitForElementVisible", fila_con, "25000", "Aparece un registro con el término"),
         c("assertElementPresent", fila_con),
     ]
-    if l.vacio:
-        L += [c("type", _buscador(l), SIN_RESULTADOS, "Término que ningún registro contiene"),
-              c("sendKeys", _buscador(l), "${KEY_ENTER}"),
+    if listado.vacio:
+        L += [c("type", _buscador(listado), SIN_RESULTADOS, "Término que ningún registro contiene"),
+              c("sendKeys", _buscador(listado), "${KEY_ENTER}"),
               c("waitForElementVisible", "css=.ant-table-placeholder, .ant-empty", "25000", "El listado queda vacío"),
               c("assertElementNotPresent", "css=.ant-table-tbody tr.ant-table-row")]
-    if l.filtro:
+    if listado.filtro:
         select = (f"xpath=//div[contains(@class,'ant-select')][.//span[contains(@class,'ant-select-selection-placeholder') "
-                  f"or contains(@class,'ant-select-selection-item')][normalize-space(.)='{l.filtro}']]")
-        L += [c("open", l.ruta, comentario="Listado sin búsqueda, para aplicar el filtro"),
+                  f"or contains(@class,'ant-select-selection-item')][normalize-space(.)='{listado.filtro}']]")
+        L += [c("open", listado.ruta, comentario="Listado sin búsqueda, para aplicar el filtro"),
               c("waitForElementVisible", "css=.ant-table-tbody tr.ant-table-row", "30000"),
-              c("click", select, comentario=f"Filtro «{l.filtro}»"),
+              c("click", select, comentario=f"Filtro «{listado.filtro}»"),
               c("waitForElementVisible", OPCION % 1, "15000"),
-              c("click", OPCION % (2 if l.filtro.startswith("Tod") else 1)),
+              c("click", OPCION % (2 if listado.filtro.startswith("Tod") else 1)),
               c("waitForElementPresent", "css=.ant-table-tbody", "20000"),
               c("verifyElementPresent", "css=.ant-table-tbody"),
               c("assertElementNotPresent", "css=.ant-result-error", comentario="El filtro no produce un error")]

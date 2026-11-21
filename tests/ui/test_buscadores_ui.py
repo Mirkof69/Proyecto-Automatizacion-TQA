@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -106,10 +107,14 @@ def test_tc171_cuatro_tipos_de_localizador():
         espera.until(EC.visibility_of_element_located((By.ID, "email"))).send_keys(rol.email)            # ID
         d.find_element(By.ID, "password").send_keys(config.PASSWORD)                                     # ID
         d.find_element(By.CSS_SELECTOR, "form.login-form button[type='submit']").click()                 # CSS Selector
-        espera.until(EC.visibility_of_element_located((By.ID, "totp_code"))).send_keys(totp.codigo(rol.totp_secret))
-        boton = d.find_elements(By.CSS_SELECTOR, ".login-otp-item button[type='submit']")
-        if boton:
-            boton[0].click()
+        try:   # el doble factor solo aparece si la cuenta lo tiene activo
+            WebDriverWait(d, 8).until(EC.visibility_of_element_located((By.ID, "totp_code"))).send_keys(
+                totp.codigo(rol.totp_secret))
+            boton = d.find_elements(By.CSS_SELECTOR, ".login-otp-item button[type='submit']")
+            if boton:
+                boton[0].click()
+        except TimeoutException:
+            pass
         espera.until(EC.url_contains("/dashboard"))
         evidencias.captura(d, "panel", "Panel del médico tras el doble factor")
         assert "/dashboard" in d.current_url, "No llegó al panel"                                         # validación 1

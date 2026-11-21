@@ -54,9 +54,22 @@ class ApiCliente:
         if metodo in ("POST", "PUT", "PATCH", "DELETE"):
             kw.setdefault("headers", {})["X-CSRFToken"] = self.csrf()
             kw["headers"]["Referer"] = config.SUT_URL + "/"
+        espera = kw.pop("timeout", 60)
         t0 = time.perf_counter()
-        r = self.s.request(metodo, self._url(ruta), timeout=kw.pop("timeout", 60), **kw)
+        r = self.s.request(metodo, self._url(ruta), timeout=espera, **kw)
         self.ultima_duracion_ms = (time.perf_counter() - t0) * 1000
+        # La sesión del sistema dura 15 minutos y una corrida completa dura más: si venció, se vuelve a iniciar
+        # sesión con el mismo rol y se repite la petición una vez (no con archivos, que ya se leyeron).
+        if r.status_code == 401 and self.rol and not getattr(self, "_renovando", False) and "files" not in kw \
+                and not ruta.startswith(("/usuarios/login", "/usuarios/mfa", "/token/")):
+            self._renovando = True
+            try:
+                if self.login().status_code == 200:
+                    if metodo in ("POST", "PUT", "PATCH", "DELETE"):
+                        kw["headers"]["X-CSRFToken"] = self.csrf()
+                    r = self.s.request(metodo, self._url(ruta), timeout=espera, **kw)
+            finally:
+                self._renovando = False
         if verificar and r.status_code >= 400:
             raise ApiError(f"{metodo} {ruta} -> HTTP {r.status_code}: {r.text[:300]}")
         return r

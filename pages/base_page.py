@@ -145,9 +145,11 @@ class BasePage:
 
     # ------------------------------------------------------------------ alertas y pestañas
     def aceptar_alerta(self, espera: int = 5) -> str:
-        alerta = WebDriverWait(self.driver, espera).until(EC.alert_is_present())
-        texto = alerta.text
-        alerta.accept()
+        from utils import grabacion
+        with grabacion.pausa():   # con una alerta nativa abierta Chrome no entrega imágenes de la página
+            alerta = WebDriverWait(self.driver, espera).until(EC.alert_is_present())
+            texto = alerta.text
+            alerta.accept()
         return texto
 
     def confirmar_popconfirm(self):
