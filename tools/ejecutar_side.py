@@ -69,6 +69,8 @@ def _reproducir(side: Path, visible: bool = False) -> dict:
         copia = tmp / side.name
         copia.write_text(texto, encoding="utf-8")
         args = ["--headless=new", "--window-size=1366,900"] if not visible else ["--window-size=1366,900"]
+        if os.environ.get("QA_GRABAR") == "1":   # la grabadora del panel se conecta a este puerto
+            args.append(f"--remote-debugging-port={os.environ.get('QA_GRABAR_PUERTO_IDE', '9339')}")
         capacidades = f"browserName=chrome goog:chromeOptions.args=[{','.join(args)}]"
         t0 = time.perf_counter()
         # Jest tarda unos 30 s en salir tras terminar (deja conexiones abiertas): se lee su salida en vivo y, cuando

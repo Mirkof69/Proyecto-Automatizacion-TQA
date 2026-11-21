@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 
 from components.menu_lateral import MenuLateral
 from pages.login_page import LoginPage, SetupMfaPage
-from utils import config, evidencias
+from utils import config
 from utils.driver_factory import consola
 
 pytestmark = [pytest.mark.ui, pytest.mark.auth]

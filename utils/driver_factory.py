@@ -37,6 +37,8 @@ def crear_driver(navegador: str | None = None, headless: bool | None = None):
     if not headless:
         driver.maximize_window()
     driver.set_page_load_timeout(60)
+    from utils import grabacion
+    grabacion.adjuntar_driver(driver)
     return driver
 
 

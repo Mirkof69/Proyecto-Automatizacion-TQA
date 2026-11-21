@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centro de Pruebas QA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+{% raw %}
+<style>
+:root{
+  --fondo:#eef3f2;--sup:#ffffff;--sup2:#f6f9f8;--tinta:#142225;--suave:#5a6d70;--linea:#d6e1df;
+  --acento:#0e7c7b;--acento-t:#ffffff;--acento-suave:#d9efed;
+  --pass:#1a7f4b;--pass-s:#dcf1e5;--fail:#c0362c;--fail-s:#f8e0dd;--blocked:#a66300;--blocked-s:#f6e8d2;
+  --notrun:#66737f;--notrun-s:#e5e9ec;--consola:#0f1a1c;--consola-t:#cfe0dd;--sombra:0 1px 2px rgba(20,34,37,.06);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --fondo:#0d1416;--sup:#142023;--sup2:#18262a;--tinta:#e1ebe9;--suave:#93a8a6;--linea:#233437;
+  --acento:#3fc1b8;--acento-t:#0d1416;--acento-suave:#163a3a;
+  --pass:#5fd39a;--pass-s:#143326;--fail:#ff8a7e;--fail-s:#3a1c1a;--blocked:#f2b45a;--blocked-s:#3a2c14;
+  --notrun:#a3aeb8;--notrun-s:#242f36;--consola:#091011;--consola-t:#cfe0dd;--sombra:none}}
+:root[data-theme="dark"]{
+  --fondo:#0d1416;--sup:#142023;--sup2:#18262a;--tinta:#e1ebe9;--suave:#93a8a6;--linea:#233437;
+  --acento:#3fc1b8;--acento-t:#0d1416;--acento-suave:#163a3a;
+  --pass:#5fd39a;--pass-s:#143326;--fail:#ff8a7e;--fail-s:#3a1c1a;--blocked:#f2b45a;--blocked-s:#3a2c14;
+  --notrun:#a3aeb8;--notrun-s:#242f36;--consola:#091011;--consola-t:#cfe0dd;--sombra:none}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--fondo);color:var(--tinta);font:15px/1.5 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;min-height:100vh}
+.mono,code,pre{font-family:"IBM Plex Mono",Consolas,monospace}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--acento)}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:1.45rem;font-weight:600}
+h2{font-size:1.05rem;font-weight:600}
+h3{font-size:.92rem;font-weight:600}
+.etq{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--suave);font-weight:600}
+.suave{color:var(--suave)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+#vista:focus,#vista:focus-visible{outline:none}
+
+/* armazón */
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+.lateral{background:var(--sup);border-right:1px solid var(--linea);padding:20px 14px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
+.marca{display:flex;gap:10px;align-items:center;padding:0 6px}
+.logo{width:36px;height:36px;border-radius:9px;background:var(--acento);color:var(--acento-t);display:grid;place-items:center;flex:none}
+.marca b{display:block;font-size:.95rem;line-height:1.2}
+.marca span{font-size:.75rem;color:var(--suave)}
+nav{display:grid;gap:2px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--tinta);text-decoration:none;font-weight:500;font-size:.93rem}
+nav a:hover{background:var(--sup2)}
+nav a.activo{background:var(--acento-suave);color:var(--acento)}
+nav svg{width:18px;height:18px;flex:none}
+.mini{margin-top:auto;border:1px solid var(--linea);border-radius:10px;padding:12px;background:var(--sup2);display:grid;gap:8px;font-size:.82rem}
+.mini[hidden]{display:none}
+.salir{background:none;border:1px solid var(--linea);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:.85rem;color:var(--suave)}
+.contenido{padding:28px 32px 64px;min-width:0;max-width:1320px;width:100%;margin:0 auto}
+.cabeza{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.cabeza p{margin:4px 0 0;color:var(--suave)}
+
+/* piezas */
+.tarjeta{background:var(--sup);border:1px solid var(--linea);border-radius:12px;padding:18px 20px;box-shadow:var(--sombra);min-width:0}
+.rejilla{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.kpi{background:var(--sup);border:1px solid var(--linea);border-radius:10px;padding:12px 14px;display:grid;gap:2px}
+.kpi b{font-size:1.6rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi.p b{color:var(--pass)}.kpi.f b{color:var(--fail)}.kpi.b b{color:var(--blocked)}.kpi.n b{color:var(--notrun)}
+.salud{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.anillo{position:relative;display:grid;place-items:center}
+.anillo .centro{position:absolute;text-align:center;line-height:1.1}
+.anillo .centro b{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums}
+.anillo .centro span{display:block;font-size:.72rem;color:var(--suave);margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.chip.PASS{background:var(--pass-s);color:var(--pass)}
+.chip.FAIL{background:var(--fail-s);color:var(--fail)}
+.chip.BLOCKED{background:var(--blocked-s);color:var(--blocked)}
+.chip.NOTRUN,.chip.OMITIDA{background:var(--notrun-s);color:var(--notrun)}
+.chip.neutro{background:var(--sup2);color:var(--suave);border:1px solid var(--linea)}
+.chip.ok{background:var(--pass-s);color:var(--pass)}.chip.mal{background:var(--fail-s);color:var(--fail)}
+.punto{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:8px;border:1px solid var(--linea);background:var(--sup);cursor:pointer;font-weight:500;font-size:.9rem;text-decoration:none;color:var(--tinta);white-space:nowrap}
+.btn:hover{border-color:var(--acento)}
+.btn.prim{background:var(--acento);border-color:var(--acento);color:var(--acento-t);font-weight:600}
+.btn.peligro{color:var(--fail);border-color:var(--fail)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn svg{width:16px;height:16px}
+.acciones{display:flex;flex-wrap:wrap;gap:8px}
+.vacio{padding:28px;text-align:center;color:var(--suave)}
+
+/* barras */
+.barra{height:8px;border-radius:99px;background:var(--sup2);overflow:hidden;display:flex}
+.barra i{display:block;height:100%}
+.bp{background:var(--pass)}.bf{background:var(--fail)}.bb{background:var(--blocked)}.bn{background:var(--notrun)}.ba{background:var(--acento)}
+.filas{display:grid;gap:10px}
+.fila-barra{display:grid;grid-template-columns:minmax(120px,190px) 1fr auto;gap:12px;align-items:center;font-size:.86rem}
+.fila-barra span:last-child{font-variant-numeric:tabular-nums;color:var(--suave);min-width:62px;text-align:right}
+
+/* tendencia */
+.tend{display:flex;align-items:flex-end;gap:5px;height:140px;padding-top:8px;border-bottom:1px solid var(--linea)}
+.tend a{flex:1;min-width:6px;max-width:34px;border-radius:4px 4px 0 0;display:block}
+.tend a:hover{opacity:.75}
+
+/* ejecutar */
+.opciones{display:flex;flex-wrap:wrap;gap:12px 26px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--sup);padding:7px 13px;cursor:pointer;font-size:.88rem}
+.seg button+button{border-left:1px solid var(--linea)}
+.seg button.on{background:var(--acento);color:var(--acento-t);font-weight:600}
+.interr{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.9rem;user-select:none}
+.interr input{appearance:none;width:36px;height:20px;border-radius:99px;background:var(--notrun-s);position:relative;cursor:pointer;margin:0;flex:none;border:1px solid var(--linea)}
+.interr input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--sup);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.interr input:checked{background:var(--acento);border-color:var(--acento)}
+.interr input:checked::after{left:18px}
+.interr input:disabled{opacity:.45;cursor:not-allowed}
+.masiva{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:linear-gradient(0deg,var(--acento-suave),var(--acento-suave)),var(--sup);border-color:transparent}
+.suites{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.suite{display:flex;flex-direction:column;gap:8px}
+.suite p{margin:0;color:var(--suave);font-size:.86rem;flex:1}
+.suite .pie{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.8rem;color:var(--suave)}
+.grupo{margin:22px 0 10px}
+
+/* en vivo */
+.vivo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+.progreso{height:14px;border-radius:99px;background:var(--sup2);overflow:hidden;border:1px solid var(--linea)}
+.progreso i{display:block;height:100%;background:var(--acento);transition:width .4s}
+.pantalla{aspect-ratio:16/9.4;background:var(--consola);border-radius:10px;overflow:hidden;display:grid;place-items:center;color:var(--consola-t);font-size:.85rem;border:1px solid var(--linea)}
+.pantalla img{width:100%;height:100%;object-fit:contain;display:block}
+pre.consola{background:var(--consola);color:var(--consola-t);border-radius:10px;padding:12px;height:260px;overflow:auto;margin:0;font-size:12px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.recientes{display:grid;gap:4px;font-size:.8rem;max-height:240px;overflow:auto}
+.recientes div{display:flex;gap:8px;align-items:center;min-width:0}
+.recientes code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem;color:var(--suave)}
+.latido{animation:latido 1.4s ease-in-out infinite}
+@keyframes latido{50%{opacity:.35}}
+
+/* tablas */
+.tabla{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--linea);vertical-align:middle}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--suave);font-weight:600;white-space:nowrap}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.clic{cursor:pointer}
+tr.clic:hover td{background:var(--sup2)}
+
+/* casos */
+.filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.filtros button{border:1px solid var(--linea);background:var(--sup);border-radius:99px;padding:5px 12px;cursor:pointer;font-size:.82rem}
+.filtros button.on{border-color:var(--acento);background:var(--acento-suave);color:var(--acento);font-weight:600}
+.filtros input{flex:1;min-width:180px;padding:7px 12px;border-radius:8px;border:1px solid var(--linea);background:var(--sup)}
+.caso{border:1px solid var(--linea);border-radius:10px;background:var(--sup)}
+.caso+.caso{margin-top:6px}
+.caso summary{display:grid;grid-template-columns:86px 92px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 14px;cursor:pointer;list-style:none}
+.caso summary::-webkit-details-marker{display:none}
+.caso summary .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.caso summary .t small{display:block;color:var(--suave);font-size:.76rem}
+.caso[open] summary{border-bottom:1px solid var(--linea)}
+.cuerpo{padding:14px;display:grid;gap:14px}
+pre.error{background:var(--fail-s);color:var(--tinta);border-radius:8px;padding:10px 12px;margin:0;white-space:pre-wrap;font-size:12px;max-height:280px;overflow:auto}
+video{width:100%;max-width:880px;border-radius:8px;background:#000;display:block}
+.evs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.evs a{display:grid;gap:4px;text-decoration:none;color:var(--suave);font-size:.75rem}
+.evs img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;border-radius:6px;border:1px solid var(--linea);background:var(--sup2)}
+.icono-v{color:var(--acento);display:inline-flex}
+
+/* ventana de correo */
+dialog.ventana{border:1px solid var(--linea);border-radius:14px;padding:0;width:min(640px,calc(100vw - 32px));background:var(--sup);color:var(--tinta);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+dialog.ventana::backdrop{background:rgba(10,20,22,.55)}
+.ventana form{display:grid;gap:14px;padding:20px 22px}
+.ventana .pie-v{display:flex;justify-content:flex-end;gap:8px;padding-top:4px}
+.campo{display:grid;gap:5px}
+.campo input[type=text],.campo textarea{width:100%;padding:8px 11px;border-radius:8px;border:1px solid var(--linea);background:var(--sup2);font:inherit;color:inherit}
+.campo textarea{min-height:120px;resize:vertical}
+.campo small{color:var(--suave);font-size:.78rem}
+.marcas{display:grid;gap:6px}
+.marca-ad{display:flex;align-items:center;gap:9px;font-size:.88rem;cursor:pointer}
+.marca-ad input{width:16px;height:16px;accent-color:var(--acento)}
+.marca-ad span.suave{margin-left:auto;font-size:.78rem;font-variant-numeric:tabular-nums}
+.terminada{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;margin-bottom:16px}
+.tipos-f{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tipos-f button{border:1px dashed var(--linea);background:var(--sup);border-radius:99px;padding:4px 11px;cursor:pointer;font-size:.8rem}
+.tipos-f button.on{border-style:solid;border-color:var(--acento);background:var(--acento-suave);color:var(--acento);font-weight:600}
+
+/* aviso */
+#aviso{position:fixed;bottom:20px;right:20px;max-width:420px;background:var(--tinta);color:var(--fondo);padding:12px 16px;border-radius:10px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none;z-index:9}
+#aviso.ver{opacity:1;transform:none}
+
+@media (max-width: 900px){
+  .app{grid-template-columns:1fr}
+  .lateral{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px;gap:12px;border-right:0;border-bottom:1px solid var(--linea)}
+  nav{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 100%}
+  nav a{padding:7px 10px}
+  .mini{margin:0;flex:1 1 100%}
+  .contenido{padding:20px 16px 56px}
+  .g2,.g3,.vivo,.salud,.masiva,.terminada{grid-template-columns:1fr}
+  .caso summary{grid-template-columns:76px minmax(0,1fr) auto}
+  .caso summary .ocultar{display:none}
+  .fila-barra{grid-template-columns:110px 1fr auto}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+{% endraw %}
+</head>
+<body data-usuario="{{ usuario }}" data-sut="{{ sut }}">
+{% raw %}
+<div class="app">
+  <aside class="lateral">
+    <div class="marca">
+      <div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg></div>
+      <div><b>Centro de Pruebas QA</b><span>Fetal Medical Bolivia</span></div>
+    </div>
+    <nav aria-label="Secciones">
+      <a href="#/panel" data-v="panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z"/></svg>Panel</a>
+      <a href="#/ejecutar" data-v="ejecutar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8z"/></svg>Ejecutar pruebas</a>
+      <a href="#/corridas" data-v="corridas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/></svg>Corridas y grabaciones</a>
+      <a href="#/metricas" data-v="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</a>
+    </nav>
+    <div class="mini" id="mini" hidden></div>
+    <button class="salir" id="salir" type="button">Cerrar sesión</button>
+  </aside>
+  <main class="contenido" id="vista" tabindex="-1"></main>
+</div>
+<div id="aviso" role="status" aria-live="polite"></div>
+<dialog class="ventana" id="v-correo" aria-labelledby="vc-titulo"><form method="dialog" id="vc-form">
+  <div><span class="etq">Enviar resultados por Gmail</span><h2 id="vc-titulo">Corrida</h2></div>
+  <div class="campo"><span class="etq">Para</span>
+    <label class="marca-ad"><input type="checkbox" id="vc-principal" checked><span>Destinatario principal: <b id="vc-principal-dir"></b></span></label></div>
+  <div class="campo"><label class="etq" for="vc-otros">También enviar a (otros correos)</label>
+    <input type="text" id="vc-otros" placeholder="docente@gmail.com, otro@gmail.com" autocomplete="email">
+    <small>Separe varios correos con coma. Por ejemplo, el Gmail de un docente o de un tercero.</small></div>
+  <div class="campo"><label class="etq" for="vc-asunto">Asunto</label><input type="text" id="vc-asunto" maxlength="200"></div>
+  <div class="campo"><label class="etq" for="vc-mensaje">Mensaje</label><textarea id="vc-mensaje" maxlength="5000"></textarea>
+    <small>Debajo del mensaje va el resumen de la corrida: salud, resultados por tipo de prueba y por módulo, fallos y métricas.</small></div>
+  <div class="campo"><span class="etq">Adjuntos</span><div class="marcas" id="vc-adjuntos"></div><small id="vc-total"></small></div>
+  <div class="pie-v"><button class="btn" type="button" id="vc-cancelar">Cancelar</button>
+    <button class="btn prim" type="submit" id="vc-enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>Enviar</button></div>
+</form></dialog>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const vista = $('#vista');
+const ESTADOS = ['PASS', 'FAIL', 'BLOCKED', 'NOT RUN'];
+const COLOR = {PASS: 'var(--pass)', FAIL: 'var(--fail)', BLOCKED: 'var(--blocked)', 'NOT RUN': 'var(--notrun)'};
+let opciones = {navegador: 'chrome', grabar: true, visible: false, correo: false, ia: false};
+try { Object.assign(opciones, JSON.parse(localStorage.getItem('qa-opciones') || '{}')); } catch {}
+let enCurso = {estado: 'libre'};
+let lineaSig = 0, lineasConsola = [];
+let sistema = null;
+
+async function api(ruta, op = {}) {
+  const r = await fetch(ruta, {...op, headers: {'Content-Type': 'application/json', 'X-Panel': '1', ...(op.headers || {})}});
+  if (r.status === 401) { location.href = '/ingresar'; throw new Error('sesión'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `Error ${r.status}`);
+  return j;
+}
+function aviso(t) { const a = $('#aviso'); a.textContent = t; a.classList.add('ver'); clearTimeout(aviso.t); aviso.t = setTimeout(() => a.classList.remove('ver'), 4200); }
+const pct = (v) => v == null ? '—' : `${String(v).replace('.', ',')} %`;
+const dur = (s) => { if (s == null) return '—'; s = Math.round(s); return s >= 3600 ? `${Math.floor(s/3600)} h ${Math.floor(s%3600/60)} min` : s >= 60 ? `${Math.floor(s/60)} min ${s%60} s` : `${s} s`; };
+const fecha = (iso) => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString('es-BO', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); };
+const idFecha = (id) => /^\d{8}-\d{6}$/.test(id) ? `${id.slice(6,8)}/${id.slice(4,6)}/${id.slice(0,4)} ${id.slice(9,11)}:${id.slice(11,13)}` : id;
+const colorTasa = (t) => t == null ? 'var(--notrun)' : t >= 95 ? 'var(--pass)' : t >= 80 ? 'var(--blocked)' : 'var(--fail)';
+
+function anillo(valor, tam = 150, texto = 'salud') {
+  const r = tam / 2 - 11, c = 2 * Math.PI * r, v = valor == null ? 0 : Math.max(0, Math.min(100, valor));
+  return `<div class="anillo" style="width:${tam}px;height:${tam}px" role="img" aria-label="${texto}: ${pct(valor)}">
+    <svg width="${tam}" height="${tam}"><circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="none" stroke="var(--sup2)" stroke-width="12"/>
+    <circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="none" stroke="${colorTasa(valor)}" stroke-width="12" stroke-linecap="round"
+      stroke-dasharray="${c * v / 100} ${c}" transform="rotate(-90 ${tam/2} ${tam/2})"/></svg>
+    <div class="centro"><b>${valor == null ? '—' : String(Math.round(valor * 10) / 10).replace('.', ',')}${valor == null ? '' : '<small style="font-size:.9rem"> %</small>'}</b><span>${texto}</span></div></div>`;
+}
+function kpis(t) {
+  return `<div class="kpis">
+    <div class="kpi"><span class="etq">Pruebas</span><b>${t.total ?? '—'}</b></div>
+    <div class="kpi p"><span class="etq">PASS</span><b>${t.PASS ?? '—'}</b></div>
+    <div class="kpi f"><span class="etq">FAIL</span><b>${t.FAIL ?? '—'}</b></div>
+    <div class="kpi b"><span class="etq">BLOCKED</span><b>${t.BLOCKED ?? '—'}</b></div>
+    <div class="kpi n"><span class="etq">NOT RUN</span><b>${t['NOT RUN'] ?? '—'}</b></div></div>`;
+}
+function barraEstados(m) {
+  const tot = ESTADOS.reduce((a, e) => a + (m[e] || 0), 0) || 1;
+  return `<div class="barra">${ESTADOS.map(e => m[e] ? `<i class="${{PASS:'bp',FAIL:'bf',BLOCKED:'bb','NOT RUN':'bn'}[e]}" style="width:${100 * m[e] / tot}%" title="${e}: ${m[e]}"></i>` : '').join('')}</div>`;
+}
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const chip = (e) => `<span class="chip ${String(e).replace(' ', '')}"><span class="punto"></span>${esc(e)}</span>`;
+
+/* ------------------------------------------------------------------ PANEL */
+async function verPanel() {
+  vista.innerHTML = `<div class="cabeza"><div><h1>Panel</h1><p>Estado de la automatización y salud de la última corrida.</p></div>
+    <a class="btn prim" href="#/ejecutar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>Ejecutar pruebas</a></div><div class="vacio">Cargando…</div>`;
+  const d = await api('/api/resumen');
+  sistema = d.sistema;
+  const u = d.ultima, cob = d.cobertura || {};
+  const sis = d.sistema;
+  const estadoSis = `<div class="acciones" style="gap:6px">
+      <span class="chip ${sis.frontend ? 'ok' : 'mal'}"><span class="punto"></span>Sistema web ${sis.frontend ? 'en línea' : 'sin respuesta'}</span>
+      <span class="chip ${sis.api ? 'ok' : 'mal'}"><span class="punto"></span>API ${sis.api ? 'en línea' : 'sin respuesta'}</span>
+      <span class="chip ${sis.correo ? 'ok' : 'neutro'}"><span class="punto"></span>Gmail ${sis.correo ? 'configurado' : 'sin configurar'}</span>
+      <span class="chip ${sis.ia.disponible ? 'ok' : 'neutro'}"><span class="punto"></span>IA ${sis.ia.disponible ? esc(sis.ia.proveedor) : 'no disponible'}</span></div>`;
+  let html = `<div class="cabeza"><div><h1>Panel</h1><p>Estado de la automatización y salud de la última corrida.</p></div>
+    <a class="btn prim" href="#/ejecutar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>Ejecutar pruebas</a></div>`;
+  html += `<div class="tarjeta" style="margin-bottom:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <div><span class="etq">Sistema bajo prueba</span><div class="mono" style="font-size:.85rem">${esc(sis.sut)}</div></div>${estadoSis}</div>`;
+  if (!u) {
+    html += `<div class="tarjeta vacio">Todavía no hay corridas. Vaya a <a href="#/ejecutar">Ejecutar pruebas</a>.</div>`;
+    vista.innerHTML = html; return;
+  }
+  html += `<div class="rejilla g2" style="margin-bottom:16px">
+    <div class="tarjeta salud">${anillo(u.tasa, 168, 'salud')}
+      <div style="display:grid;gap:12px;min-width:0">
+        <div><span class="etq">Última corrida</span><h2 style="margin-top:2px"><a href="#/corrida/${esc(u.run_id)}">${esc(u.nombre)}</a></h2>
+          <div class="suave" style="font-size:.85rem">${idFecha(u.run_id)} · ${esc(u.duracion)} · ${u.videos} grabaciones</div></div>
+        ${kpis(u)}
+      </div></div>
+    <div class="tarjeta"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Salud por corrida</h2><span class="etq">últimas ${d.tendencia.length}</span></div>
+      <p class="suave" style="margin:4px 0 6px;font-size:.82rem">PASS sobre pruebas ejecutadas. Toque una barra para abrir la corrida.</p>
+      <div class="tend">${d.tendencia.map(c => `<a href="#/corrida/${esc(c.run_id)}" title="${esc(c.nombre)} · ${idFecha(c.run_id)} · ${pct(c.tasa)} · ${c.PASS}/${c.total}" style="height:${Math.max(4, c.tasa || 0)}%;background:${colorTasa(c.tasa)}"></a>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--suave);margin-top:4px"><span>${idFecha(d.tendencia[0]?.run_id || '')}</span><span>${idFecha(d.tendencia.at(-1)?.run_id || '')}</span></div>
+    </div></div>`;
+  html += `<div class="rejilla g2">
+    <div class="tarjeta"><h2 style="margin-bottom:12px">Resultados por módulo</h2><div class="filas">
+      ${u.por_modulo.map(m => `<div class="fila-barra"><span>${esc(m.modulo)}</span>${barraEstados(m)}<span>${m.PASS}/${m.total}</span></div>`).join('')}</div></div>
+    <div class="rejilla">
+      <div class="tarjeta"><h2 style="margin-bottom:10px">Cobertura</h2>
+        <div class="kpis">
+          <div class="kpi"><span class="etq">Casos diseñados</span><b>${cob['casos_diseñados'] ?? '—'}</b></div>
+          <div class="kpi p"><span class="etq">Automatizados</span><b>${cob.automatizados ?? '—'}</b><span class="suave" style="font-size:.78rem">${pct(cob.cobertura_automatizacion_pct)} de lo elegido</span></div>
+          <div class="kpi"><span class="etq">Requisitos</span><b>${pct(cob.cobertura_requisitos_pct)}</b></div>
+        </div></div>
+      <div class="tarjeta"><h2 style="margin-bottom:10px">Defectos</h2>
+        <div class="kpis"><div class="kpi"><span class="etq">Registrados</span><b>${d.defectos.total}</b></div>
+          <div class="kpi p"><span class="etq">Verificados</span><b>${d.defectos.verificados}</b></div>
+          <div class="kpi b"><span class="etq">Abiertos</span><b>${d.defectos.abiertos}</b></div></div>
+        <p style="margin:10px 0 0"><a href="#/metricas">Ver todas las métricas</a></p></div>
+    </div></div>`;
+  vista.innerHTML = html;
+}
+
+/* ------------------------------------------------------------------ EJECUTAR */
+let suitesCache = null;
+async function verEjecutar() {
+  if (!sistema) { try { sistema = (await api('/api/resumen')).sistema; } catch {} }
+  vista.innerHTML = `<div class="cabeza"><div><h1>Ejecutar pruebas</h1><p>Elija qué probar y pulse Ejecutar. Puede seguir la corrida en vivo aquí mismo.</p></div></div>
+    <div id="zona-vivo"></div>
+    <div class="tarjeta" style="margin-bottom:16px"><div class="opciones">
+      <div style="display:grid;gap:5px"><span class="etq">Navegador</span><div class="seg" id="nav">
+        ${['chrome','edge','firefox'].map(n => `<button type="button" data-n="${n}" class="${opciones.navegador === n ? 'on' : ''}">${n[0].toUpperCase() + n.slice(1)}</button>`).join('')}</div></div>
+      <label class="interr"><input type="checkbox" data-o="grabar" ${opciones.grabar ? 'checked' : ''}>Grabar video de cada prueba</label>
+      <label class="interr"><input type="checkbox" data-o="correo" ${opciones.correo && sistema?.correo ? 'checked' : ''} ${sistema?.correo ? '' : 'disabled'}>Enviar el reporte por Gmail al terminar</label>
+      <label class="campo" id="otros-auto" style="min-width:260px;${opciones.correo && sistema?.correo ? '' : 'display:none'}"><span class="etq">También enviar a</span>
+        <input type="text" id="correo-otros" placeholder="otro@gmail.com" value="${esc(opciones.correo_otros || '')}" style="padding:6px 10px;border-radius:8px;border:1px solid var(--linea);background:var(--sup2)"></label>
+      <label class="interr"><input type="checkbox" data-o="visible" ${opciones.visible ? 'checked' : ''}>Mostrar el navegador en el equipo</label>
+      <label class="interr"><input type="checkbox" data-o="ia" ${opciones.ia && sistema?.ia?.disponible ? 'checked' : ''} ${sistema?.ia?.disponible ? '' : 'disabled'}>Análisis de fallos con IA</label>
+    </div></div>
+    <div id="lista-suites"><div class="vacio">Cargando suites…</div></div>`;
+  $('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; opciones.navegador = b.dataset.n; guardarOp(); $('#nav').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); });
+  vista.querySelectorAll('[data-o]').forEach(i => i.addEventListener('change', () => { opciones[i.dataset.o] = i.checked; guardarOp();
+    if (i.dataset.o === 'correo') $('#otros-auto').style.display = i.checked ? '' : 'none'; }));
+  $('#correo-otros').addEventListener('input', e => { opciones.correo_otros = e.target.value; guardarOp(); });
+  pintarVivo();
+  suitesCache = await api('/api/suites');
+  pintarSuites();
+}
+function guardarOp() { try { localStorage.setItem('qa-opciones', JSON.stringify(opciones)); } catch {} }
+function pintarSuites() {
+  const z = $('#lista-suites'); if (!z || !suitesCache) return;
+  const ocupado = enCurso.estado !== 'libre';
+  const pie = (s) => `<div class="pie"><span>${s.pruebas != null ? plural(s.pruebas, 'prueba', 'pruebas') : 'contando…'}${s.ultima ? ` · ${dur(s.ultima.duracion_s)}` : ''}</span>
+      ${s.ultima ? `<span class="chip" style="background:var(--sup2);color:${colorTasa(s.ultima.tasa)}">${pct(s.ultima.tasa)}</span>` : ''}</div>`;
+  const tarjeta = (s) => `<div class="tarjeta suite"><h3>${esc(s.nombre)}</h3><p>${esc(s.descripcion)}</p>${pie(s)}
+      <button class="btn prim" data-suite="${s.clave}" ${ocupado ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>Ejecutar</button></div>`;
+  const m = suitesCache.filter(s => s.grupo === 'masiva');
+  const grupos = [['rapida', 'Rápida'], ['herramienta', 'Por herramienta'], ['modulo', 'Por módulo del sistema']];
+  z.innerHTML = `<div class="tarjeta masiva"><div><span class="etq">Ejecución masiva</span><h2 style="font-size:1.25rem;margin:2px 0 4px">Todas las pruebas del sistema con un solo botón</h2>
+      <p class="suave" style="margin:0;font-size:.9rem">${esc(m[0].descripcion)} ${m[0].pruebas ? `<b class="num">${m[0].pruebas} pruebas</b>` : ''}${m[0].ultima ? `, la última tardó ${dur(m[0].ultima.duracion_s)}` : ''}.</p></div>
+      <div class="acciones">${m.map((s, i) => `<button class="btn ${i ? '' : 'prim'}" style="padding:11px 18px" data-suite="${s.clave}" ${ocupado ? 'disabled' : ''}>${i ? '' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>'}${esc(i ? 'Solo regresión' : 'Ejecutar todo')}</button>`).join('')}</div></div>
+    ${grupos.map(([g, t]) => `<h2 class="grupo">${t}</h2><div class="suites">${suitesCache.filter(s => s.grupo === g).map(tarjeta).join('')}</div>`).join('')}`;
+  z.querySelectorAll('[data-suite]').forEach(b => b.addEventListener('click', () => lanzar(b.dataset.suite)));
+}
+async function lanzar(suite) {
+  try {
+    const correo_otros = (opciones.correo && opciones.correo_otros) ? opciones.correo_otros.split(/[,;\s]+/).filter(Boolean) : [];
+    const r = await api('/api/ejecutar', {method: 'POST', body: JSON.stringify({suite, ...opciones, correo_otros})});
+    aviso(`Corrida ${r.run_id} iniciada`);
+    lineaSig = 0; lineasConsola = [];
+    if (location.hash !== '#/ejecutar') location.hash = '#/ejecutar';
+    await sondear(true);
+  } catch (e) { aviso(e.message); }
+}
+async function cancelar() {
+  if (!confirm('¿Cancelar la corrida en curso? Se cerrarán los navegadores y se limpiarán los datos QA.')) return;
+  try { await api('/api/cancelar', {method: 'POST'}); aviso('Cancelando…'); } catch (e) { aviso(e.message); }
+}
+let ultimoRun = '';
+function pintarVivo() {
+  const z = $('#zona-vivo'); if (!z) return;
+  const e = enCurso;
+  if (e.estado === 'libre') {
+    const u = e.ultima, id = e.run_id;
+    if (!u || !id) { z.innerHTML = ''; return; }
+    const t = u.totales, base = `/corrida/${encodeURIComponent(id)}/`;
+    z.innerHTML = `<div class="tarjeta terminada">${anillo(u.tasa, 130, 'salud')}
+      <div style="display:grid;gap:10px;min-width:0">
+        <div><span class="etq">Última corrida terminada</span><h2>${esc(e.nombre_suite)}</h2>
+          <div class="suave mono" style="font-size:.8rem">Corrida ${esc(id)} · ${esc(u.duracion)} · ${t.PASS} PASS · ${t.FAIL} FAIL · ${plural(u.videos, 'video', 'videos')} de ${plural(u.con_video, 'prueba', 'pruebas')}</div></div>
+        ${u.por_tipo.length ? `<div class="acciones" style="gap:6px">${u.por_tipo.map(x => `<span class="chip neutro" title="${esc(x.descripcion)}">${esc(x.tipo)}: <b class="num" style="color:${colorTasa(x.tasa)}">${x.PASS}/${x.total}</b></span>`).join('')}</div>` : ''}
+        <div class="acciones">
+          <a class="btn prim" href="#/corrida/${esc(id)}">Ver resultados</a>
+          <a class="btn" href="#/corrida/${esc(id)}/videos" ${u.videos ? '' : 'aria-disabled="true" style="pointer-events:none;opacity:.5"'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Ver videos (${u.videos})</a>
+          <button class="btn" type="button" id="t-correo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>Enviar por correo</button>
+          ${u.pdf ? `<a class="btn" href="${base}reporte.pdf" target="_blank" rel="noopener">Reporte PDF</a>` : ''}
+          ${u.html ? `<a class="btn" href="${base}reporte.html" target="_blank" rel="noopener">Reporte HTML</a>` : ''}</div>
+        ${u.correo ? `<div class="suave" style="font-size:.8rem">Correo: ${esc(u.correo)}</div>` : ''}</div></div>`;
+    $('#t-correo').addEventListener('click', () => abrirCorreo(id));
+    return;
+  }
+  const p = e.total ? Math.min(100, Math.round(100 * e.hechos / e.total)) : 0;
+  const c = e.cuenta || {};
+  const resto = e.total && e.hechos ? e.transcurrido / e.hechos * (e.total - e.hechos) : null;
+  const titulo = {['en curso']: 'Ejecutando', cancelando: 'Cancelando', reportes: 'Generando reportes'}[e.estado] || e.estado;
+  if (!$('#vivo-raiz')) {
+    z.innerHTML = `<div class="tarjeta" id="vivo-raiz" style="margin-bottom:16px;display:grid;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div><span class="etq latido" id="v-tit"></span><h2 id="v-nom" style="font-size:1.2rem"></h2><div class="suave mono" id="v-run" style="font-size:.8rem"></div></div>
+        <button class="btn peligro" id="v-cancelar" type="button">Cancelar corrida</button></div>
+      <div style="display:grid;gap:6px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <b id="v-pct" class="num" style="font-size:2rem;line-height:1"></b><span class="suave num" id="v-tiempo" style="font-size:.85rem"></span></div>
+        <div class="progreso"><i id="v-barra"></i></div></div>
+      <div class="acciones" id="v-cuenta"></div>
+      <div class="vivo">
+        <div style="display:grid;gap:8px;align-content:start"><span class="etq">Pantalla del navegador en vivo</span><div class="pantalla" id="v-pantalla">Esperando una prueba de interfaz…</div>
+          <div style="font-size:.85rem"><span class="etq">Caso en curso</span><div id="v-caso" style="font-weight:500"></div></div></div>
+        <div style="display:grid;gap:8px;align-content:start"><span class="etq">Últimas terminadas</span><div class="recientes" id="v-rec"></div>
+          <details><summary class="etq" style="cursor:pointer">Registro de pytest</summary><pre class="consola" id="v-consola"></pre></details></div>
+      </div></div>`;
+    $('#v-cancelar').addEventListener('click', cancelar);
+  }
+  $('#v-tit').textContent = titulo;
+  $('#v-nom').textContent = e.nombre_suite;
+  $('#v-run').textContent = `Corrida ${e.run_id} · ${e.opciones?.navegador || ''}${e.opciones?.grabar ? ' · grabando video' : ''}${e.opciones?.correo ? ' · envía por Gmail' : ''}`;
+  $('#v-pct').textContent = e.estado === 'reportes' ? 'Reportes…' : `${p} %`;
+  $('#v-tiempo').textContent = `${e.hechos} de ${e.total || '…'} pruebas · ${dur(e.transcurrido)} transcurridos${resto != null && e.estado === 'en curso' ? ` · faltan ≈ ${dur(resto)}` : ''}`;
+  $('#v-barra').style.width = (e.estado === 'reportes' ? 100 : p) + '%';
+  $('#v-cuenta').innerHTML = `${chip('PASS')} <b class="num">${c.PASS || 0}</b> ${chip('FAIL')} <b class="num">${c.FAIL || 0}</b> <span class="chip OMITIDA"><span class="punto"></span>Omitidas</span> <b class="num">${c.OMITIDA || 0}</b>`;
+  $('#v-cancelar').disabled = e.estado !== 'en curso';
+  $('#v-caso').innerHTML = e.caso?.tc ? `<span class="mono" style="color:var(--acento)">${esc(e.caso.tc)}</span> ${esc(e.caso.nombre)}` : '<span class="suave">—</span>';
+  $('#v-rec').innerHTML = (e.recientes || []).map(r => `<div>${chip(r.estado)}<code title="${esc(r.nodeid)}">${esc(r.nodeid.split('::').slice(1).join('::'))}</code></div>`).join('') || '<span class="suave">—</span>';
+  const pan = $('#v-pantalla');
+  if (e.vivo) {
+    let img = pan.querySelector('img');
+    if (!img) { pan.innerHTML = '<img alt="Pantalla actual del navegador de la prueba">'; img = pan.querySelector('img'); }
+    img.src = `/api/en-vivo.jpg?t=${Date.now()}`;
+  } else if (pan.querySelector('img') && e.estado !== 'en curso') {
+    pan.textContent = 'Sin navegador abierto';
+  }
+  const con = $('#v-consola');
+  if (con) { con.textContent = lineasConsola.slice(-500).join('\n'); if (con.closest('details').open) con.scrollTop = con.scrollHeight; }
+}
+function pintarMini() {
+  const m = $('#mini'), e = enCurso;
+  if (e.estado === 'libre') { m.hidden = true; return; }
+  const p = e.total ? Math.min(100, Math.round(100 * e.hechos / e.total)) : 0;
+  m.hidden = false;
+  m.innerHTML = `<span class="etq latido">${e.estado === 'reportes' ? 'Generando reportes' : 'Corrida en curso'}</span>
+    <a href="#/ejecutar" style="font-weight:600;text-decoration:none">${esc(e.nombre_suite)}</a>
+    <div class="progreso" style="height:8px"><i style="width:${e.estado === 'reportes' ? 100 : p}%"></i></div>
+    <span class="num suave">${p} % · ${e.cuenta?.PASS || 0} PASS · ${e.cuenta?.FAIL || 0} FAIL</span>`;
+}
+let temporizador = null;
+async function sondear(forzar = false) {
+  clearTimeout(temporizador);
+  try {
+    const prev = enCurso.estado, prevRun = enCurso.run_id;
+    const r = await api(`/api/en-curso?desde=${lineaSig}`);
+    if (r.run_id !== prevRun) { lineasConsola = []; }
+    lineasConsola.push(...r.lineas); if (lineasConsola.length > 3000) lineasConsola = lineasConsola.slice(-2000);
+    lineaSig = r.siguiente;
+    enCurso = r;
+    if (prev !== 'libre' && prev !== undefined && r.estado === 'libre') {
+      ultimoRun = r.run_id; aviso(`Corrida ${r.run_id} terminada`);
+      if (location.hash === '#/ejecutar') { const v = $('#vivo-raiz'); if (v) v.remove(); }
+    }
+    pintarMini();
+    if ($('#zona-vivo')) { pintarVivo(); if (forzar || prev !== r.estado) pintarSuites(); }
+  } catch {}
+  temporizador = setTimeout(sondear, enCurso.estado === 'libre' ? 6000 : 1500);
+}
+
+/* ------------------------------------------------------------------ CORRIDAS */
+async function verCorridas() {
+  vista.innerHTML = `<div class="cabeza"><div><h1>Corridas y grabaciones</h1><p>Cada ejecución con su salud, sus reportes y los videos de sus pruebas.</p></div></div><div class="vacio">Cargando…</div>`;
+  const l = await api('/api/corridas');
+  vista.innerHTML = `<div class="cabeza"><div><h1>Corridas y grabaciones</h1><p>Cada ejecución con su salud, sus reportes y los videos de sus pruebas.</p></div></div>
+    <div class="tarjeta"><div class="tabla"><table>
+    <thead><tr><th>Corrida</th><th>Suite</th><th>Estado</th><th style="text-align:right">Pruebas</th><th>Resultado</th><th style="text-align:right">Salud</th><th style="text-align:right">Duración</th><th>Correo</th></tr></thead>
+    <tbody>${l.map(c => `<tr class="${c.total != null ? 'clic' : ''}" data-id="${esc(c.run_id)}">
+      <td class="mono" style="white-space:nowrap">${c.total != null ? `<a href="#/corrida/${esc(c.run_id)}">${esc(c.run_id)}</a>` : esc(c.run_id)}<div class="suave" style="font-size:.74rem">${esc(c.origen === 'panel' ? 'desde el panel' : 'desde consola')}</div></td>
+      <td>${esc(c.nombre)}</td><td><span class="chip neutro">${esc(c.estado)}</span></td>
+      <td class="n">${c.total ?? '—'}</td>
+      <td style="min-width:150px">${c.total ? barraEstados(c) : ''}<div class="suave num" style="font-size:.74rem;margin-top:3px">${c.total ? `${c.PASS} PASS · ${c.FAIL} FAIL · ${c.BLOCKED} BL · ${c['NOT RUN']} NR` : ''}</div></td>
+      <td class="n" style="color:${colorTasa(c.tasa)};font-weight:600">${pct(c.tasa)}</td>
+      <td class="n">${dur(c.duracion_s)}</td><td class="suave" style="font-size:.78rem;max-width:220px">${esc(c.correo || '—')}</td></tr>`).join('') || '<tr><td colspan="8" class="vacio">Sin corridas</td></tr>'}</tbody></table></div></div>`;
+  vista.querySelectorAll('tr.clic').forEach(tr => tr.addEventListener('click', e => { if (!e.target.closest('a')) location.hash = `#/corrida/${tr.dataset.id}`; }));
+}
+
+let detalle = null, filtro = 'TODOS', busca = '', tipoF = '';
+async function verCorrida(id, sub = '') {
+  vista.innerHTML = `<div class="vacio">Cargando la corrida ${esc(id)}…</div>`;
+  detalle = await api(`/api/corrida/${encodeURIComponent(id)}`);
+  filtro = detalle.totales.FAIL ? 'FAIL' : 'TODOS'; busca = ''; tipoF = '';
+  pintarCorrida();
+  if (sub === 'videos') verVideos();
+}
+function verVideos() {
+  filtro = 'VIDEO'; tipoF = '';
+  $('#filtros').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.f === 'VIDEO'));
+  $('#tipos-f').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.t === ''));
+  pintarCasos();
+  const primero = $('#casos details.caso'); if (primero) primero.open = true;
+  $('#casos').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+/* ------------------------------------------------------------------ CORREO */
+async function abrirCorreo(id) {
+  const dlg = $('#v-correo');
+  let o;
+  try { o = await api(`/api/corrida/${encodeURIComponent(id)}/correo`); } catch (e) { aviso(e.message); return; }
+  if (!o.configurado) { aviso('Falta configurar Gmail en el .env de la automatización (SMTP_PASSWORD con la contraseña de aplicación)'); return; }
+  $('#vc-titulo').textContent = `Corrida ${id}`;
+  $('#vc-principal-dir').textContent = o.principal.join(', ') || '— (MAIL_TO vacío)';
+  $('#vc-principal').checked = o.principal.length > 0; $('#vc-principal').disabled = !o.principal.length;
+  let guardados = ''; try { guardados = localStorage.getItem('qa-correo-otros') || ''; } catch {}
+  $('#vc-otros').value = guardados;
+  $('#vc-asunto').value = o.asunto; $('#vc-mensaje').value = o.mensaje;
+  $('#vc-adjuntos').innerHTML = o.adjuntos.map(a => `<label class="marca-ad"><input type="checkbox" value="${a.clave}" data-kb="${a.kb}" ${a.marcado && a.disponible ? 'checked' : ''} ${a.disponible ? '' : 'disabled'}>
+      <span>${esc(a.nombre)}</span><span class="suave">${a.disponible ? (a.kb >= 1024 ? `${(a.kb / 1024).toFixed(1).replace('.', ',')} MB` : `${a.kb} KB`) : 'no generado'}</span></label>`).join('');
+  const total = () => { const kb = [...dlg.querySelectorAll('#vc-adjuntos input:checked')].reduce((s, i) => s + +i.dataset.kb, 0);
+    $('#vc-total').textContent = `Total de adjuntos: ${(kb / 1024).toFixed(1).replace('.', ',')} MB de ${o.limite_mb} MB permitidos por Gmail.`;
+    $('#vc-total').style.color = kb / 1024 > o.limite_mb ? 'var(--fail)' : ''; return kb; };
+  $('#vc-adjuntos').onchange = total; total();
+  $('#vc-cancelar').onclick = () => dlg.close();
+  $('#vc-form').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const otros = $('#vc-otros').value.split(/[,;\s]+/).filter(Boolean);
+    const principal = $('#vc-principal').checked;
+    if (!principal && !otros.length) { aviso('Elija al menos un destinatario'); return; }
+    if (total() / 1024 > o.limite_mb) { aviso('Los adjuntos pasan el límite de Gmail: quite el ZIP o el Capítulo 6'); return; }
+    const b = $('#vc-enviar'); b.disabled = true; b.lastChild.textContent = 'Enviando…';
+    try {
+      const r = await api(`/api/corrida/${encodeURIComponent(id)}/correo`, {method: 'POST', body: JSON.stringify({
+        principal, otros, asunto: $('#vc-asunto').value, mensaje: $('#vc-mensaje').value,
+        adjuntos: [...dlg.querySelectorAll('#vc-adjuntos input:checked')].map(i => i.value)})});
+      try { localStorage.setItem('qa-correo-otros', $('#vc-otros').value); } catch {}
+      dlg.close();
+      aviso(`Enviado a ${r.para.join(', ')} con ${r.adjuntos.length} adjuntos`);
+      if (detalle && detalle.run_id === id) { detalle.correo = r.nota; }
+      sondear();
+    } catch (err) { aviso(err.message); }
+    b.disabled = false; b.lastChild.textContent = 'Enviar';
+  };
+  dlg.showModal();
+}
+function pintarCorrida() {
+  const d = detalle, t = d.totales, a = d.archivos, base = `/corrida/${encodeURIComponent(d.run_id)}/`;
+  const desc = (k, txt, f) => a[k] ? `<a class="btn" href="${base}${f}" target="_blank" rel="noopener">${txt}</a>` : '';
+  vista.innerHTML = `<div class="cabeza"><div><a href="#/corridas" style="font-size:.85rem">← Todas las corridas</a>
+      <h1 style="margin-top:4px">${esc(d.nombre)}</h1><p class="mono" style="font-size:.85rem">Corrida ${esc(d.run_id)} · ${fecha(d.inicio)} · ${esc(d.duracion)} · ${esc(d.ambiente.navegador || '')}${d.ambiente.headless === false ? ' visible' : ''}</p></div>
+      <div class="acciones">
+        <button class="btn prim" id="b-correo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>Enviar por correo</button>
+        <button class="btn" id="b-videos" type="button" ${d.videos ? '' : 'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Ver videos (${d.videos})</button>
+        ${d.fallidos ? `<button class="btn" id="b-retest" type="button">Repetir los ${d.fallidos} fallidos</button>` : ''}
+        <button class="btn" id="b-regen" type="button" ${d.tarea ? 'disabled' : ''}>${d.tarea ? esc(d.tarea) : 'Regenerar reportes'}</button></div></div>
+    ${d.correo ? `<p class="suave" style="margin:-12px 0 16px;font-size:.84rem">Correo: ${esc(d.correo)}</p>` : ''}
+    <div class="rejilla g2" style="margin-bottom:16px">
+      <div class="tarjeta salud">${anillo(d.tasa, 160, 'salud')}<div style="display:grid;gap:12px;min-width:0">${kpis(t)}
+        <div class="suave" style="font-size:.84rem">Salud = PASS ÷ (PASS + FAIL). Cobertura del catálogo en esta corrida: <b>${d.cobertura.ejecutados}</b> de ${d.cobertura.automatizables} casos automatizables (${pct(d.cobertura.pct)}). ${d.videos} grabaciones.</div></div></div>
+      <div class="tarjeta" style="display:grid;gap:10px;align-content:start"><h2>Reportes</h2>
+        <div class="acciones">${desc('html', 'Reporte HTML', 'reporte.html')}${desc('pdf', 'PDF', 'reporte.pdf')}${desc('docx', 'Word', 'reporte.docx')}
+          ${a.zip ? `<a class="btn" href="${base}${esc(a.zip)}">ZIP con evidencias</a>` : ''}${desc('log', 'Registro', 'ejecucion.log')}</div>
+        ${Object.keys(d.clasificacion).length ? `<div><span class="etq">Origen de los fallos</span><div class="acciones" style="margin-top:4px">${Object.entries(d.clasificacion).map(([k, v]) => `<span class="chip FAIL">${esc(k)}: ${v}</span>`).join('')}</div></div>` : '<p class="suave" style="margin:0">Sin fallos en esta corrida.</p>'}
+        ${d.rendimiento.length ? `<div class="tabla"><table><thead><tr><th>Escenario de carga</th><th style="text-align:right">Peticiones</th><th style="text-align:right">p95</th><th style="text-align:right">Errores</th></tr></thead><tbody>
+          ${d.rendimiento.map(x => `<tr><td>${esc(x.escenario)}</td><td class="n">${x.peticiones}</td><td class="n">${Math.round(x.p95_ms)} ms</td><td class="n">${x.error_pct} %</td></tr>`).join('')}</tbody></table></div>` : ''}
+      </div></div>
+    <div class="rejilla g2" style="margin-bottom:16px">
+      <div class="tarjeta"><h2 style="margin-bottom:4px">Por tipo de prueba</h2><p class="suave" style="margin:0 0 12px;font-size:.8rem">Toque un tipo para ver solo esas pruebas. Una prueba puede ser de varios tipos.</p><div class="filas">
+        ${d.por_tipo.map(m => `<div class="fila-barra" style="cursor:pointer" data-tipo="${m.clave}" title="${esc(m.descripcion)}"><span><b>${esc(m.tipo)}</b></span>${barraEstados(m)}<span>${m.PASS}/${m.total} · ${pct(m.tasa)}</span></div>`).join('') || '<p class="suave">Sin datos.</p>'}</div></div>
+      <div class="tarjeta"><h2 style="margin-bottom:12px">Por módulo</h2><div class="filas">
+        ${d.por_modulo.map(m => `<div class="fila-barra"><span>${esc(m.modulo)}</span>${barraEstados(m)}<span>${m.PASS}/${m.total} · ${pct(m.tasa)}</span></div>`).join('')}</div></div></div>
+    <div class="tarjeta"><h2 style="margin-bottom:12px">Casos ejecutados</h2>
+      <div class="filtros" id="filtros">${['TODOS', ...ESTADOS, 'VIDEO'].map(f => `<button type="button" data-f="${f}" class="${filtro === f ? 'on' : ''}">${f === 'TODOS' ? `Todos (${d.casos.length})` : f === 'VIDEO' ? `Con grabación (${d.casos.filter(c => c.videos.length).length})` : `${f} (${t[f] || 0})`}</button>`).join('')}
+        <input type="search" id="busca" placeholder="Buscar por TC, nombre o módulo" aria-label="Buscar caso"></div>
+      <div class="tipos-f" id="tipos-f"><span class="etq" style="align-self:center">Tipo:</span>${[['', 'Todos'], ...d.por_tipo.map(x => [x.clave, `${x.tipo} (${x.total})`])].map(([k, n]) => `<button type="button" data-t="${k}" class="${tipoF === k ? 'on' : ''}">${esc(n)}</button>`).join('')}</div>
+      <div id="casos"></div></div>`;
+  $('#filtros').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; filtro = b.dataset.f; $('#filtros').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); pintarCasos(); });
+  $('#busca').addEventListener('input', e => { busca = e.target.value.toLowerCase(); pintarCasos(); });
+  $('#b-correo').addEventListener('click', () => abrirCorreo(d.run_id));
+  $('#b-videos').addEventListener('click', () => verVideos());
+  $('#tipos-f').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tipoF = b.dataset.t; $('#tipos-f').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); pintarCasos(); });
+  vista.querySelectorAll('[data-tipo]').forEach(f => f.addEventListener('click', () => { tipoF = f.dataset.tipo; filtro = 'TODOS'; pintarCorrida(); $('#casos').scrollIntoView({behavior: 'smooth', block: 'start'}); }));
+  $('#b-regen').addEventListener('click', async () => {
+    try { await api(`/api/corrida/${d.run_id}/reportes`, {method: 'POST'}); aviso('Generando reportes: tarda alrededor de un minuto'); $('#b-regen').disabled = true; $('#b-regen').textContent = 'Generando reportes…'; }
+    catch (err) { aviso(err.message); }
+  });
+  const rt = $('#b-retest'); if (rt) rt.addEventListener('click', () => { if (confirm(`¿Volver a ejecutar los ${d.fallidos} casos fallidos o bloqueados?`)) lanzar(`fallidos:${d.run_id}`); });
+  pintarCasos();
+}
+function pintarCasos() {
+  const d = detalle, base = `/corrida/${encodeURIComponent(d.run_id)}/`;
+  let l = d.casos;
+  if (filtro === 'VIDEO') l = l.filter(c => c.videos.length); else if (filtro !== 'TODOS') l = l.filter(c => c.estado === filtro);
+  if (tipoF) l = l.filter(c => (c.tipos || []).includes(tipoF));
+  if (busca) l = l.filter(c => `${c.tc} ${c.nombre} ${c.titulo} ${c.modulo} ${c.nodeid}`.toLowerCase().includes(busca));
+  const z = $('#casos');
+  if (!l.length) { z.innerHTML = '<div class="vacio">Ningún caso con ese filtro.</div>'; return; }
+  const muestra = l.slice(0, 300);
+  z.innerHTML = muestra.map((c, i) => `<details class="caso" data-i="${d.casos.indexOf(c)}"><summary>
+      <span class="mono" style="font-weight:600;color:var(--acento)">${esc(c.tc)}</span>${chip(c.estado)}
+      <span class="t">${esc(c.titulo || c.nombre)}<small>${esc(c.modulo)} · ${esc(c.herramienta || '')}</small></span>
+      <span class="ocultar">${c.videos.length ? '<span class="icono-v" title="Tiene grabación"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></span>' : ''}${c.evidencias.length ? ` <span class="suave" style="font-size:.78rem">${c.evidencias.length} EV</span>` : ''}</span>
+      <span class="num suave" style="font-size:.8rem">${c.duracion_s} s</span></summary><div class="cuerpo"></div></details>`).join('')
+    + (l.length > muestra.length ? `<p class="suave" style="text-align:center">Se muestran 300 de ${l.length}; use el buscador para acotar.</p>` : '');
+  z.querySelectorAll('details.caso').forEach(det => det.addEventListener('toggle', () => {
+    if (!det.open) { det.querySelectorAll('video').forEach(v => v.pause()); return; }
+    const c = d.casos[+det.dataset.i], cu = det.querySelector('.cuerpo');
+    if (cu.dataset.ok) return; cu.dataset.ok = 1;
+    cu.innerHTML = `<div class="mono suave" style="font-size:.76rem;word-break:break-all">${esc(c.nodeid)}</div>
+      ${c.error ? `<div><span class="etq">${c.estado === 'FAIL' ? 'Error' : 'Motivo'}${c.clasificacion ? ` · origen: ${esc(c.clasificacion)}` : ''}</span><pre class="error">${esc(c.error)}</pre></div>` : ''}
+      ${c.defectos.length ? `<div><span class="etq">Defectos vinculados</span> ${c.defectos.map(x => `<span class="chip neutro">${esc(x)}</span>`).join(' ')}</div>` : ''}
+      ${c.videos.map((v, k) => `<div style="display:grid;gap:6px"><span class="etq">Grabación${c.videos.length > 1 ? ` ${k + 1}` : ''}</span>
+        <video controls preload="metadata" src="${base}${esc(v)}"></video><a href="${base}${esc(v)}" download style="font-size:.8rem">Descargar video</a></div>`).join('')}
+      ${c.evidencias.length ? `<div><span class="etq">Evidencias (${c.evidencias.length})</span><div class="evs" style="margin-top:6px">${c.evidencias.map(e => /\.(png|jpe?g)$/i.test(e.archivo)
+          ? `<a href="${base}${esc(e.archivo)}" target="_blank" rel="noopener"><img loading="lazy" src="${base}${esc(e.archivo)}" alt="${esc(e.descripcion)}">${esc(e.descripcion)}</a>`
+          : `<a href="${base}${esc(e.archivo)}" target="_blank" rel="noopener">${esc(e.archivo.split('/').pop())}</a>`).join('')}</div></div>` : ''}
+      ${c.traceback ? `<details><summary class="etq" style="cursor:pointer">Traza completa</summary><pre class="error" style="background:var(--sup2)">${esc(c.traceback)}</pre></details>` : ''}
+      ${!c.videos.length && !c.evidencias.length && !c.error ? '<p class="suave" style="margin:0">Prueba de API: no abre navegador, por eso no tiene grabación.</p>' : ''}`;
+    const v = cu.querySelector('video'); if (v) v.play().catch(() => {});
+  }));
+}
+
+/* ------------------------------------------------------------------ MÉTRICAS */
+async function verMetricas() {
+  vista.innerHTML = `<div class="cabeza"><div><h1>Métricas</h1><p>Cobertura, calidad del producto y del proceso de pruebas.</p></div></div><div class="vacio">Cargando…</div>`;
+  const m = await api('/api/metricas'), c = m.cobertura || {}, h = m.historico;
+  const barras = (obj, color = 'ba') => { const max = Math.max(1, ...Object.values(obj || {})); return `<div class="filas">${Object.entries(obj || {}).map(([k, v]) => `<div class="fila-barra"><span>${esc(k)}</span><div class="barra"><i class="${color}" style="width:${100 * v / max}%"></i></div><span>${v}</span></div>`).join('')}</div>`; };
+  const sev = {}; ['Crítica', 'Alta', 'Media', 'Baja'].forEach(s => { const n = m.defectos.filter(d => d.severidad === s).length; if (n) sev[s] = n; });
+  const modulos = c.por_modulo || {};
+  vista.innerHTML = `<div class="cabeza"><div><h1>Métricas</h1><p>Cobertura, calidad del producto y del proceso de pruebas.</p></div>
+      <span class="suave" style="font-size:.82rem">Cobertura calculada en la corrida ${esc(c.run_id || '—')}</span></div>
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi"><span class="etq">Casos diseñados</span><b>${c['casos_diseñados'] ?? '—'}</b><span class="suave" style="font-size:.76rem">${c.manuales ?? 0} manuales</span></div>
+      <div class="kpi p"><span class="etq">Automatización</span><b>${pct(c.cobertura_automatizacion_pct)}</b><span class="suave" style="font-size:.76rem">${c.automatizados} de ${c.seleccionados_automatizar}</span></div>
+      <div class="kpi"><span class="etq">Requisitos cubiertos</span><b>${pct(c.cobertura_requisitos_pct)}</b><span class="suave" style="font-size:.76rem">${(c.rf_con_casos || 0) + (c.rnf_con_casos || 0)} de ${(c.rf_total || 0) + (c.rnf_total || 0)}</span></div>
+      <div class="kpi p"><span class="etq">Éxito de pruebas</span><b>${pct(c.exito_pruebas_pct)}</b><span class="suave" style="font-size:.76rem">${c.pruebas?.PASS ?? 0} de ${c.pruebas?.total ?? 0}</span></div>
+      <div class="kpi"><span class="etq">Salud histórica</span><b>${pct(h.tasa)}</b><span class="suave" style="font-size:.76rem">${h.corridas} corridas · ${h.ejecutadas} ejecuciones</span></div>
+      <div class="kpi"><span class="etq">Defectos</span><b>${m.defectos.length}</b><span class="suave" style="font-size:.76rem">${m.defectos.filter(d => d.estado === 'Verificado').length} verificados</span></div>
+    </div>
+    <div class="rejilla g2" style="margin-bottom:16px">
+      <div class="tarjeta"><h2 style="margin-bottom:12px">Casos por herramienta</h2>${barras(c.por_herramienta)}</div>
+      <div class="tarjeta"><h2 style="margin-bottom:12px">Casos por técnica de diseño</h2>${barras(c.por_tecnica)}</div></div>
+    <div class="rejilla g2" style="margin-bottom:16px">
+      <div class="tarjeta"><h2 style="margin-bottom:12px">Estado de los casos por módulo</h2><div class="filas">
+        ${Object.entries(modulos).map(([k, v]) => `<div class="fila-barra"><span>${esc(k)}</span><div class="barra">${['PASS','FAIL','NOT RUN','MANUAL'].map(e => v[e] ? `<i class="${{PASS:'bp',FAIL:'bf','NOT RUN':'bn',MANUAL:'bb'}[e]}" style="width:${100 * v[e] / Object.values(v).reduce((a, b) => a + b, 0)}%" title="${e}: ${v[e]}"></i>` : '').join('')}</div><span>${Object.values(v).reduce((a, b) => a + b, 0)}</span></div>`).join('')}</div>
+        <div class="acciones" style="margin-top:12px;font-size:.78rem">${chip('PASS')}${chip('FAIL')}${chip('NOT RUN')}<span class="chip BLOCKED"><span class="punto"></span>MANUAL</span></div></div>
+      <div class="rejilla" style="align-content:start">
+        <div class="tarjeta"><h2 style="margin-bottom:12px">Defectos por severidad</h2>${barras(sev, 'bf')}</div>
+        <div class="tarjeta"><h2 style="margin-bottom:8px">Rendimiento (Locust)</h2>
+          ${m.rendimiento.length ? `<div class="tabla"><table><thead><tr><th>Escenario</th><th style="text-align:right">Peticiones</th><th style="text-align:right">p50</th><th style="text-align:right">p95</th><th style="text-align:right">Errores</th></tr></thead><tbody>
+            ${m.rendimiento.map(x => `<tr><td>${esc(x.escenario)}</td><td class="n">${x.peticiones}</td><td class="n">${Math.round(x.p50_ms ?? 0)} ms</td><td class="n">${Math.round(x.p95_ms)} ms</td><td class="n">${x.error_pct} %</td></tr>`).join('')}</tbody></table></div>
+            <p class="suave" style="font-size:.78rem;margin:6px 0 0">Corrida ${esc(m.rendimiento_corrida)}</p>` : '<p class="suave">Ejecute la suite de rendimiento para ver la carga.</p>'}</div></div></div>
+    <div class="tarjeta" style="margin-bottom:16px"><h2 style="margin-bottom:10px">Registro de defectos</h2><div class="tabla"><table>
+      <thead><tr><th>ID</th><th>Defecto</th><th>Severidad</th><th>Caso</th><th>Estado</th><th>Corrección</th></tr></thead>
+      <tbody>${m.defectos.map(d => `<tr><td class="mono" style="white-space:nowrap">${esc(d.id)}</td><td style="min-width:260px">${esc(d.titulo)}</td><td>${esc(d.severidad)}</td><td class="mono">${esc(d.caso)}</td>
+        <td><span class="chip ${d.estado === 'Verificado' ? 'ok' : 'neutro'}">${esc(d.estado)}</span></td><td class="mono suave" style="white-space:nowrap">${esc(d.commit || '—')} ${esc(d.fecha_correccion || '')}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="tarjeta"><h2 style="margin-bottom:8px">Cómo se calculan</h2><ul class="suave" style="margin:0;padding-left:18px;font-size:.88rem;display:grid;gap:4px">
+      <li><b>Salud</b> = PASS ÷ (PASS + FAIL). Las BLOCKED y NOT RUN no se ejecutaron y no cuentan.</li>
+      <li><b>Automatización</b> = casos automatizados ÷ casos elegidos para automatizar.</li>
+      <li><b>Requisitos cubiertos</b> = requisitos (RF + RNF) con al menos un caso ÷ total de requisitos.</li>
+      <li><b>Cobertura del catálogo en una corrida</b> = casos automatizables que dieron PASS o FAIL ÷ casos automatizables.</li></ul></div>`;
+}
+
+/* ------------------------------------------------------------------ rutas */
+async function ruta() {
+  const h = location.hash || '#/panel';
+  const [, v, id, sub] = h.split('/');
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('activo', a.dataset.v === (v === 'corrida' ? 'corridas' : v)));
+  try {
+    if (v === 'ejecutar') await verEjecutar();
+    else if (v === 'corridas') await verCorridas();
+    else if (v === 'corrida' && id) await verCorrida(decodeURIComponent(id), sub);
+    else if (v === 'metricas') await verMetricas();
+    else await verPanel();
+  } catch (e) { if (e.message !== 'sesión') vista.innerHTML = `<div class="tarjeta vacio">No se pudo cargar: ${esc(e.message)}</div>`; }
+  vista.focus({preventScroll: true});
+}
+window.addEventListener('hashchange', () => { window.scrollTo(0, 0); ruta(); });
+$('#salir').addEventListener('click', async () => { await fetch('/api/salir', {method: 'POST'}); location.href = '/ingresar'; });
+ruta(); sondear();
+</script>
+{% endraw %}
+</body>
+</html>

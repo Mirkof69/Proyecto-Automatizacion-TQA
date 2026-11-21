@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from utils import evidencias
+from utils import evidencias, grabacion
 
 pytestmark = [pytest.mark.ui, pytest.mark.ide]
 
@@ -28,7 +28,8 @@ def test_grabacion_selenium_ide(request, side):
     tc = side.stem.split("_")[0]
     request.node.add_marker(pytest.mark.tc(tc))
     evidencias.CASO_ACTUAL["tc"] = tc
-    r = ejecutar_side.reproducir(side)
+    with grabacion.grabar_puerto():
+        r = ejecutar_side.reproducir(side)
     salida = evidencias.DIR_EV / f"EV-{tc}-side-runner.txt"
     salida.parent.mkdir(parents=True, exist_ok=True)
     salida.write_text(r["salida"], encoding="utf-8")

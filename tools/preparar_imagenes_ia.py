@@ -23,7 +23,7 @@ def principal():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sistema", required=True)
     a = ap.parse_args()
-    base = Path(a.sistema) / "Backend" / "Microservicio_IA" / "entrenamiento" / "redes_ecografia_real"
+    base = Path(a.sistema) / "redes-neuronales" / "entrenamiento" / "redes_ecografia_real"
     wb = openpyxl.load_workbook(base / "catalogo_imagenes.xlsx", read_only=True)
     rnd = random.Random(13)
     DESTINO.mkdir(parents=True, exist_ok=True)
