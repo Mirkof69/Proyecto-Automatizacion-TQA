@@ -99,6 +99,21 @@ details summary{cursor:pointer;color:var(--acento)}
 {% endif %}
 
 <section>
+  <h2>Resultados por tipo de prueba</h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Tipo</th><th>Qué prueba</th><th class="num">Pruebas</th><th class="num">PASS</th><th class="num">FAIL</th><th class="num">BLOCKED</th><th class="num">NOT RUN</th><th class="num">Salud</th><th>Distribución</th></tr></thead>
+    <tbody>
+    {% for m in r.por_tipo %}
+      <tr><td><b>{{ m.tipo }}</b></td><td>{{ m.descripcion }}</td><td class="num">{{ m.total }}</td><td class="num">{{ m.PASS }}</td><td class="num">{{ m.FAIL }}</td><td class="num">{{ m.BLOCKED }}</td><td class="num">{{ m['NOT RUN'] }}</td><td class="num">{{ m.tasa }} %</td>
+        <td><div class="barra" role="img" aria-label="{{ m.PASS }} PASS, {{ m.FAIL }} FAIL, {{ m.BLOCKED }} BLOCKED de {{ m.total }}">
+          <i class="p" style="width:{{ 100 * m.PASS / m.total }}%"></i><i class="f" style="width:{{ 100 * m.FAIL / m.total }}%"></i><i class="b" style="width:{{ 100 * m.BLOCKED / m.total }}%"></i></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="nota">Una prueba puede ser de más de un tipo (por ejemplo, humo y API): las filas no se suman.</p>
+</section>
+
+<section>
   <h2>Resultados por módulo</h2>
   <div class="tabla"><table>
     <thead><tr><th>Módulo</th><th class="num">Pruebas</th><th class="num">PASS</th><th class="num">FAIL</th><th class="num">BLOCKED</th><th class="num">NOT RUN</th><th class="num">Éxito</th><th>Distribución</th></tr></thead>

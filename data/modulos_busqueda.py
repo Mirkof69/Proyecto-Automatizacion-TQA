@@ -55,9 +55,12 @@ JS_TERMINO = ("const ths=[...document.querySelectorAll('.ant-table-thead th')];"
               "const p=txt.split(/\\s+/).filter(w=>/^[A-Za-zÁÉÍÓÚÑáéíóúñü]{4,}$/.test(w)&&w!=='QA');"
               "return p.length?p[0]:'';")
 
-# Nombre de la primera paciente que devuelve la búsqueda avanzada (solo activas): primera palabra de letras de la fila
-JS_TERMINO_REAL = ("const filas=[...document.querySelectorAll('.ant-table-tbody tr.ant-table-row')]"
-                   ".filter(f=>!f.innerText.includes('QA '));"
+# Nombre de la primera paciente que devuelve la búsqueda avanzada (solo activas): primera palabra de letras de la fila.
+# Prefiere una paciente que no sea de prueba; si la primera página solo trae pacientes QA (pasa tras muchas corridas),
+# usa una de ellas: su nombre sintético también sirve para buscar.
+JS_TERMINO_REAL = ("const todas=[...document.querySelectorAll('.ant-table-tbody tr.ant-table-row')];"
+                   "const reales=todas.filter(f=>!f.innerText.includes('QA '));"
+                   "const filas=reales.length?reales:todas;"
                    "const txt=filas.length?filas[0].innerText:'';"
                    "const p=txt.split(/\\s+/).filter(w=>/^[A-Za-zÁÉÍÓÚÑáéíóúñü]{4,}$/.test(w)&&w!=='años');"
                    "return p.length?p[0]:'';")

@@ -17,7 +17,7 @@ from datetime import datetime
 
 import pytest
 
-from utils import config, evidencias
+from utils import config, evidencias, grabacion
 from utils.api_client import ApiCliente
 from utils.driver_factory import crear_driver
 
@@ -62,6 +62,7 @@ def navegador(request):
                 pytest.skip(f"BLOCKED: no se pudo iniciar sesión como {clave} ({r})")
             _DRIVERS[clave] = d
         usados.append(_DRIVERS[clave])
+        grabacion.usar(_DRIVERS[clave])
         return _DRIVERS[clave]
 
     request.node._drivers = usados
@@ -140,7 +141,12 @@ def pytest_sessionfinish(session, exitstatus):
             d.quit()
         except Exception:
             pass
+    grabacion.esperar_videos()
     _escribir_resultados(session)
+    try:
+        (evidencias.DIR_RUN / "actual.json").unlink(missing_ok=True)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------------- resultados por caso
@@ -161,12 +167,28 @@ def _suites_de(item) -> list[str]:
 def pytest_runtest_setup(item):
     evidencias.REGISTRO.clear()
     evidencias.CASO_ACTUAL["tc"] = _tc_de(item)
+    grabacion.iniciar_caso(item.nodeid)
+    _anunciar(item)
+
+
+def _anunciar(item):
+    """Caso en curso para el panel web (reports/<run_id>/actual.json)."""
+    try:
+        evidencias.DIR_RUN.mkdir(parents=True, exist_ok=True)
+        doc = (item.function.__doc__ or "").strip().splitlines()
+        (evidencias.DIR_RUN / "actual.json").write_text(json.dumps(
+            {"nodeid": item.nodeid, "tc": _tc_de(item), "nombre": doc[0] if doc else item.name,
+             "inicio": datetime.now().isoformat(timespec="seconds")}, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     salida = yield
     rep = salida.get_result()
+    if rep.when == "call":
+        grabacion.cuadro_final(item.nodeid)
     if rep.when == "call" and rep.failed:
         volcados = []
         for d in getattr(item, "_drivers", []) or []:
@@ -174,6 +196,13 @@ def pytest_runtest_makereport(item, call):
         item._volcado = volcados[0] if volcados else {}
     if rep.when == "call" or (rep.when == "setup" and (rep.failed or rep.skipped)):
         _registrar(item, rep, call)
+    if rep.when == "teardown":
+        videos = grabacion.terminar_caso(item.nodeid, _tc_de(item))
+        if videos:
+            for r in reversed(_RESULTADOS):
+                if r["nodeid"] == item.nodeid:
+                    r["videos"] = videos
+                    break
 
 
 def _clasificar(texto: str) -> str:
@@ -226,7 +255,7 @@ def _registrar(item, rep, call):
         "suites": _suites_de(item), "estado": estado, "duracion_s": round(rep.duration, 2),
         "error": error, "traceback": tb, "clasificacion": _clasificar(error + tb) if estado == "FAIL" else "",
         "evidencias": list(evidencias.REGISTRO), "consola": volcado.get("consola", []),
-        "html_recorte": volcado.get("html", "")[:3000],
+        "html_recorte": volcado.get("html", "")[:3000], "videos": [],
     })
 
 

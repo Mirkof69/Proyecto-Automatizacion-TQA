@@ -17,6 +17,35 @@ from utils import config
 DIR_REPORTES = config.RAIZ / "reports"
 ESTADOS = ("PASS", "FAIL", "BLOCKED", "NOT RUN")
 
+# Tipos de prueba: por marca de pytest (results.json guarda las marcas de cada prueba en «suites») o por carpeta.
+# Una prueba puede ser de varios tipos (p. ej. humo y API).
+TIPOS: list[tuple[str, str, str]] = [
+    ("humo", "Humo (smoke)", "Camino crítico rápido"),
+    ("regresion", "Regresión", "Lo que ya funcionaba sigue funcionando"),
+    ("e2e", "Extremo a extremo (E2E)", "Un flujo completo de atención, de punta a punta"),
+    ("api", "API", "Servicios REST con pytest + requests"),
+    ("ui", "Interfaz (WebDriver)", "Pantallas con Selenium WebDriver"),
+    ("ide", "Selenium IDE", "Grabaciones .side reproducidas"),
+    ("rendimiento", "Rendimiento (Locust)", "Carga con usuarios simultáneos"),
+]
+NOMBRE_TIPO = {k: n for k, n, _ in TIPOS}
+
+
+def tipos_de(caso: dict) -> list[str]:
+    marcas = set(caso.get("suites") or [])
+    ruta = caso.get("nodeid", "").replace("\\", "/")
+    t = []
+    if "smoke" in marcas:
+        t.append("humo")
+    if "regression" in marcas:
+        t.append("regresion")
+    if "e2e" in marcas or ruta.startswith("tests/e2e/"):
+        t.append("e2e")
+    for carpeta, clave in (("api", "api"), ("ui", "ui"), ("ide", "ide"), ("rendimiento", "rendimiento")):
+        if ruta.startswith(f"tests/{carpeta}/"):
+            t.append(clave)
+    return t
+
 
 @dataclass
 class Reporte:
@@ -55,6 +84,21 @@ class Reporte:
         return {"catalogo": len(CASOS), "automatizables": len(automatizables), "ejecutados": len(ejecutados),
                 "pct": round(100 * len(ejecutados) / len(automatizables), 1) if automatizables else 0.0,
                 "sin_ejecutar": [tc for tc in automatizables if tc not in ejecutados]}
+
+    @property
+    def por_tipo(self) -> list[dict]:
+        """Resultados por tipo de prueba (humo, regresión, E2E, API, interfaz, Selenium IDE, rendimiento)."""
+        salida = []
+        for clave, nombre, descripcion in TIPOS:
+            cont = Counter(c["estado"] for c in self.casos if clave in c["tipos"])
+            total = sum(cont.values())
+            if not total:
+                continue
+            ejec = cont["PASS"] + cont["FAIL"]
+            salida.append({"clave": clave, "tipo": nombre, "descripcion": descripcion, "total": total,
+                           **{e: cont[e] for e in ESTADOS},
+                           "tasa": round(100 * cont["PASS"] / ejec, 1) if ejec else 0.0})
+        return salida
 
     @property
     def fallos(self) -> list[dict]:
@@ -96,7 +140,7 @@ def cargar(run_id: str | None = None) -> Reporte:
         casos.append({**c, "modulo": info.get("modulo", "Configuración"), "titulo_tc": info.get("titulo", c["nombre"]),
                       "prioridad": info.get("prioridad", ""), "tipo": info.get("tipo", ""),
                       "tecnica": info.get("tecnica", ""), "herramienta": info.get("herramienta", ""),
-                      "defectos": defectos_por_tc.get(c["tc"], [])})
+                      "defectos": defectos_por_tc.get(c["tc"], []), "tipos": tipos_de(c)})
 
     por_tc: dict[str, dict] = {}
     for c in casos:
