@@ -458,6 +458,17 @@ CASOS += [
      "esperado": "Sin errores para el administrador, con los botones Crear Backup, Cargar respaldo y Actualizar; "
                  "el médico no entra.",
      "justificacion": "Cubre por la interfaz lo que TC-174 a TC-179 prueban por la API."},
+    {"id": "TC-182", "modulo": "Historia clínica", "funcionalidad": "Historia clínica integrada",
+     "titulo": "Historia clínica con los datos reales de la paciente, guardado de nota y receta y actualización en vivo",
+     "requisito": "RF-15", "prioridad": "Alta", "tipo": "Funcional", "tecnica": "FL", "automatiza": "Sí",
+     "herramienta": A_UI, "origen": "Defecto",
+     "precondiciones": "Sesión de médico; paciente QA con embarazo activo",
+     "datos": "Control con PA 112/72; nota SOAP; receta de sulfato ferroso; control nuevo con PA 126/84",
+     "pasos": "1. Abrir la historia. 2. Ver Controles. 3. Guardar una nota SOAP. 4. Prescribir. "
+              "5. Registrar un control desde otra sesión. 6. Exportar PDF y Excel.",
+     "esperado": "Cada pestaña muestra lo de la base; nota y receta quedan guardadas; el control nuevo aparece sin "
+                 "recargar; PDF y Excel reales.",
+     "justificacion": "La nota, la receta y la exportación solo se simulaban; las citas y las notas no se mostraban."},
 ]
 CASOS.sort(key=lambda c: int(c["id"].split("-")[1]))
 POR_ID = {c["id"]: c for c in CASOS}
